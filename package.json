@@ -1,0 +1,15 @@
+{
+  "name": "poll-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "poll-bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "byteball",
+  "license": "MIT",
+  "dependencies": {
+    "byteballcore": "git+https://github.com/byteball/byteballcore.git",
+    "headless-byteball": "git+https://github.com/byteball/headless-byteball.git"
+  }
+}
