@@ -22,8 +22,8 @@ function readListOfPolls(handleList){
 	});
 }
 
-function getListOfPollCommands(arrQuestions){
-	return arrQuestions.map(poll => {
+function getListOfPollCommands(arrPolls){
+	return arrPolls.map(poll => {
 		let i = poll.question.indexOf(')');
 		// use unit as a command if question contains closing parenthesis
 		let command = (i === -1) ? poll.question : 'poll-'+ poll.unit;
@@ -50,8 +50,8 @@ function sendListOfPolls(device_address){
 		delete assocPollByDeviceAddress[device_address];
 	}
 
-	readListOfPolls(arrQuestions => {
-		let arrCommands = getListOfPollCommands(arrQuestions);
+	readListOfPolls(arrPolls => {
+		let arrCommands = getListOfPollCommands(arrPolls);
 		device.sendMessageToDevice(device_address, 'text', 'Please select the poll you would like to vote on:\n\n'+arrCommands.join('\n'));
 	});
 }
