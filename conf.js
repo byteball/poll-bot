@@ -11,7 +11,7 @@ exports.storage = 'sqlite';
 
 exports.hub = 'byteball.org/bb';
 exports.deviceName = 'Poll Bot';
-exports.permanent_pairing_secret = '0000';
+exports.permanent_pairing_secret = '*'; // allow any pairing secret
 exports.control_addresses = [];
 exports.payout_address = 'WHERE THE MONEY CAN BE SENT TO';
 
