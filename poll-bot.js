@@ -60,7 +60,7 @@ function sendListOfPolls(device_address){
 function readQuestion(poll_unit, handleQuestion){
 	db.query("SELECT question FROM polls WHERE unit=?;", [poll_unit], rows => {
 		if (rows.length === 0){
-			handleQuestion();
+			return handleQuestion();
 		}
 		handleQuestion(rows[0].question);
 	});
