@@ -60,9 +60,36 @@ function sendListOfPolls(device_address){
 function readQuestion(poll_unit, handleQuestion){
 	db.query("SELECT question FROM polls WHERE unit=?;", [poll_unit], rows => {
 		if (rows.length === 0){
-			throw Error("poll not found "+poll_unit);
+			handleQuestion();
 		}
 		handleQuestion(rows[0].question);
+	});
+}
+
+
+function calcResults(poll_unit, handleResults){
+	db.query("SELECT attested_fields.value, choice FROM votes JOIN unit_authors USING(unit) JOIN attested_fields USING(address) WHERE attestor_address IN(?) AND `field`='user_id' AND poll_unit=? ORDER BY votes.rowid;", [conf.arrRealNameAttestors, poll_unit], rows => {
+		var assocChoiceByAttestedUser = {};
+		rows.forEach(row => {
+			assocChoiceByAttestedUser[row.value] = row.choice; // later vote overrides the earlier one
+		});
+		var assocAttestedUserByChoice = {};
+		for (var attestedUser in assocChoiceByAttestedUser){
+			var choice = assocChoiceByAttestedUser[attestedUser];
+			if (!assocAttestedUserByChoice[choice]){
+				assocAttestedUserByChoice[choice] = [];
+			}
+			assocAttestedUserByChoice[choice].push(attestedUser);
+		}
+		db.query("SELECT choice FROM poll_choices WHERE unit=? ORDER BY choice_index;", [poll_unit], rows => {
+			rows.forEach(row => {
+				// set stats for that choice to zero if nobody has voted for that choice
+				if (!assocAttestedUserByChoice[row.choice]){
+					assocAttestedUserByChoice[row.choice] = [];
+				}
+			});
+			handleResults({users: assocAttestedUserByChoice, attestedTotal: Object.keys(assocChoiceByAttestedUser).length});
+		});
 	});
 }
 
@@ -110,6 +137,18 @@ function calcStats(poll_unit, handleStats){
 	});
 }
 
+function sendResults(device_address, poll_unit, poll_question){
+	let device = require('byteballcore/device.js');
+
+	calcResults(poll_unit, resultsData => {
+		var arrResults = [];
+		for (var choice in resultsData.users){
+			arrResults.push('- '+ choice + ': '+ resultsData.users[choice].length +' attested users' + (resultsData.attestedTotal ? ' - '+ Math.round(resultsData.users[choice].length/resultsData.attestedTotal*1000)/10 +'%' : '') );
+		}
+		device.sendMessageToDevice(device_address, 'text', 'Results for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee the [stats](command:stats) or other [polls](command:polls)');
+	});
+}
+
 function sendStats(device_address, poll_unit, poll_question){
 	let device = require('byteballcore/device.js');
 
@@ -118,7 +157,7 @@ function sendStats(device_address, poll_unit, poll_question){
 		for (var choice in statsData.totals){
 			arrResults.push('- '+ choice + ': '+(statsData.totals[choice]/1e9)+' GB ('+ statsData.addresses[choice].length +' addresses)');
 		}
-		device.sendMessageToDevice(device_address, 'text', 'Stats for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee other [polls](command:polls)');
+		device.sendMessageToDevice(device_address, 'text', 'Stats for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee the [results](command:results) or other [polls](command:polls)');
 	});
 }
 
@@ -131,7 +170,7 @@ function sendPoll(device_address, poll_unit, poll_question){
 			return device.sendMessageToDevice(device_address, 'text', "no choices in poll "+poll_unit);
 		}
 		let arrChoices = rows.map(row => row.choice);
-		device.sendMessageToDevice(device_address, 'text', 'Choose your answer for:\n'+ poll_question +'\n\n'+getListOfChoiceButtons(poll_unit, arrChoices).join('\n') +'\n\nSee the [stats](command:stats) or other [polls](command:polls)');
+		device.sendMessageToDevice(device_address, 'text', 'Choose your answer for:\n'+ poll_question +'\n\n'+getListOfChoiceButtons(poll_unit, arrChoices).join('\n') +'\n\nSee the [results](command:results), the [stats](command:stats) or other [polls](command:polls)');
 	});
 }
 
@@ -141,19 +180,25 @@ function parseText(from_address, text){
 	}
 
 	// pairing from Bot Store or polls reply in chat
-	if (text === '0000' || text === 'polls'){
+	if (text === '*' || text === '0000' || text === 'polls'){
 		return sendListOfPolls(from_address);
 	}
 
 	// stats command when selected some poll or after voting on some poll
-	if ((text === 'stats' || text.match(/^voted:/i)) && assocPollByDeviceAddress[from_address]){
+	if ((text === 'results' || text === 'stats' || text.match(/^voted:/i)) && assocPollByDeviceAddress[from_address]){
 		let poll_unit = assocPollByDeviceAddress[from_address];
 		readQuestion(poll_unit, poll_question => {
-			if (text === 'stats'){
+			if (!poll_question) return sendListOfPolls(from_address);
+
+			if (text === 'results'){
+				sendResults(from_address, poll_unit, poll_question);
+			}
+			else if (text === 'stats'){
 				sendStats(from_address, poll_unit, poll_question);
 			}
 			else {
 				setTimeout(() => { // wait that the new vote is received
+					sendResults(from_address, poll_unit, poll_question);
 					sendStats(from_address, poll_unit, poll_question);
 				}, 2000);
 			}
@@ -163,16 +208,19 @@ function parseText(from_address, text){
 	}
 
 	// commands for byteball: URI
-	if (text.match(/^poll-/i) || text.match(/^stats-/i)){
-		db.query("SELECT unit, question FROM polls WHERE unit=?;", [text.replace('poll-', '').replace('stats-', '')], rows => {
-			if (rows.length === 0){
-				return sendListOfPolls(from_address);
+	if (text.match(/^poll-/i) || text.match(/^stats-/i) || text.match(/^results-/i)){
+		let poll_unit = text.replace('poll-', '').replace('stats-', '').replace('results-', '');
+		readQuestion(poll_unit, poll_question => {
+			if (!poll_question) return sendListOfPolls(from_address);
+
+			if (text.match(/^results-/i)){
+				sendResults(from_address, poll_unit, poll_question);
 			}
-			if (text.match(/^stats-/i)){
-				sendStats(from_address, rows[0].unit, rows[0].question);
+			else if (text.match(/^stats-/i)){
+				sendStats(from_address, poll_unit, poll_question);
 			}
 			else {
-				sendPoll(from_address, rows[0].unit, rows[0].question);
+				sendPoll(from_address, poll_unit, poll_question);
 			}
 		});
 		return;
