@@ -9,7 +9,7 @@ exports.bLight = false;
 exports.storage = 'sqlite';
 
 
-exports.hub = 'byteball.org/bb';
+exports.hub = 'obyte.org/bb';
 exports.deviceName = 'Poll Bot';
 exports.permanent_pairing_secret = '*'; // allow any pairing secret
 exports.control_addresses = [];

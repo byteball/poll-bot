@@ -1,12 +1,12 @@
 /*jslint node: true */
 'use strict';
 const async = require('async');
-const conf = require('byteballcore/conf.js');
-const db = require('byteballcore/db.js');
-const eventBus = require('byteballcore/event_bus.js');
-const headlessWallet = require('headless-byteball');
-const validationUtils = require('byteballcore/validation_utils.js');
-const wallet = require('byteballcore/wallet.js');
+const conf = require('ocore/conf.js');
+const db = require('ocore/db.js');
+const eventBus = require('ocore/event_bus.js');
+const headlessWallet = require('headless-obyte');
+const validationUtils = require('ocore/validation_utils.js');
+const wallet = require('ocore/wallet.js');
 
 var assocPollByDeviceAddress = {};
 
@@ -43,7 +43,7 @@ function getListOfChoiceButtons(poll_unit, arrChoices){
 }
 
 function sendListOfPolls(device_address){
-	let device = require('byteballcore/device.js');
+	let device = require('ocore/device.js');
 
 	// forget previously selected poll
 	if (assocPollByDeviceAddress[device_address]){
@@ -150,7 +150,7 @@ function calcStats(poll_unit, handleStats){
 }
 
 function sendResults(device_address, poll_unit, poll_question, command){
-	let device = require('byteballcore/device.js');
+	let device = require('ocore/device.js');
 
 	assocPollByDeviceAddress[device_address] = poll_unit;
 	calcResults(poll_unit, command, resultsData => {
@@ -163,7 +163,7 @@ function sendResults(device_address, poll_unit, poll_question, command){
 }
 
 function sendStats(device_address, poll_unit, poll_question){
-	let device = require('byteballcore/device.js');
+	let device = require('ocore/device.js');
 
 	assocPollByDeviceAddress[device_address] = poll_unit;
 	calcStats(poll_unit, statsData => {
@@ -176,7 +176,7 @@ function sendStats(device_address, poll_unit, poll_question){
 }
 
 function sendPoll(device_address, poll_unit, poll_question){
-	let device = require('byteballcore/device.js');
+	let device = require('ocore/device.js');
 
 	assocPollByDeviceAddress[device_address] = poll_unit;
 	db.query("SELECT choice FROM poll_choices WHERE unit=? ORDER BY choice_index;", [poll_unit], rows => {
