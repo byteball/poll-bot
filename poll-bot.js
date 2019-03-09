@@ -197,7 +197,7 @@ function parseText(from_address, text){
 	}
 
 	// `command` or `command-UNIT_ID` or `voted:SOME TEXT`, but not `command some text`
-	let match_commands = text.match(/^(poll|stats|attested|email|steem|voted:)-?(\S.?)?$/i);
+	let match_commands = text.match(/^(poll|stats|attested|email|steem|voted:)-?(\S.*)?$/i);
 	if (match_commands){
 		let poll_unit;
 		// commands from `byteball:` URI
