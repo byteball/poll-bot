@@ -105,7 +105,7 @@ function calcResults(poll_unit, command, handleResults){
 	});
 }
 
-function calcStats(poll_unit, handleStats){
+function calcStatsByBalance(poll_unit, handleStats){
 	db.query("SELECT address, choice FROM votes JOIN unit_authors USING(unit) WHERE poll_unit=? ORDER BY votes.rowid;", [poll_unit], rows => {
 		var assocChoiceByAddress = {};
 		rows.forEach(row => {
@@ -162,11 +162,11 @@ function sendResults(device_address, poll_unit, poll_question, command){
 	});
 }
 
-function sendStats(device_address, poll_unit, poll_question){
+function sendStatsByBalance(device_address, poll_unit, poll_question){
 	let device = require('ocore/device.js');
 
 	assocPollByDeviceAddress[device_address] = poll_unit;
-	calcStats(poll_unit, statsData => {
+	calcStatsByBalance(poll_unit, statsData => {
 		var arrStats = [];
 		for (var choice in statsData.totals){
 			arrStats.push('- '+ choice + ': '+(statsData.totals[choice]/1e9)+' GB ('+ statsData.addresses[choice].length +' addresses)');
@@ -218,14 +218,14 @@ function parseText(from_address, text){
 
 			if (match_commands[1] === 'voted:'){
 				setTimeout(() => { // wait that the new vote is received
-					sendStats(from_address, poll_unit, poll_question);
+					sendStatsByBalance(from_address, poll_unit, poll_question);
 				}, 2000);
 			}
 			if (match_commands[1] === 'poll'){
 				sendPoll(from_address, poll_unit, poll_question);
 			}
 			else if (match_commands[1] === 'stats'){
-				sendStats(from_address, poll_unit, poll_question);
+				sendStatsByBalance(from_address, poll_unit, poll_question);
 			}
 			else {
 				sendResults(from_address, poll_unit, poll_question, match_commands[1]);
