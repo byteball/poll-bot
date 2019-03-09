@@ -156,7 +156,7 @@ function sendResults(device_address, poll_unit, poll_question, command){
 	calcResults(poll_unit, command, resultsData => {
 		var arrResults = [];
 		for (var choice in resultsData.users){
-			arrResults.push('- '+ choice + ': '+ resultsData.users[choice].length +' attested users' + (resultsData.attestedTotal ? ' - '+ Math.round(resultsData.users[choice].length/resultsData.attestedTotal*1000)/10 +'%' : '') );
+			arrResults.push('- '+ choice + ': '+ resultsData.users[choice].length +' attested users' + (resultsData.attestedTotal ? ' ('+ Math.round(resultsData.users[choice].length/resultsData.attestedTotal*1000)/10 +'%)' : '') );
 		}
 		device.sendMessageToDevice(device_address, 'text', 'Results for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee [results by balances](command:stats) or [approved polls](command:polls) or [vote again](command:poll) on this poll.');
 	});
