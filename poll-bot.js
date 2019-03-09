@@ -157,7 +157,7 @@ function sendResults(device_address, poll_unit, poll_question, command){
 		for (var choice in resultsData.users){
 			arrResults.push('- '+ choice + ': '+ resultsData.users[choice].length +' attested users' + (resultsData.attestedTotal ? ' - '+ Math.round(resultsData.users[choice].length/resultsData.attestedTotal*1000)/10 +'%' : '') );
 		}
-		device.sendMessageToDevice(device_address, 'text', 'Results for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee [results by balance](command:stats) or [approved polls](command:polls) or [vote again](command:poll) on this poll.');
+		device.sendMessageToDevice(device_address, 'text', 'Results for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee [results by balances](command:stats) or [approved polls](command:polls) or [vote again](command:poll) on this poll.');
 	});
 }
 
@@ -182,7 +182,7 @@ function sendPoll(device_address, poll_unit, poll_question){
 			return device.sendMessageToDevice(device_address, 'text', "no choices in poll "+poll_unit);
 		}
 		let arrChoices = rows.map(row => row.choice);
-		device.sendMessageToDevice(device_address, 'text', 'Choose your answer for:\n'+ poll_question +'\n\n'+getListOfChoiceButtons(poll_unit, arrChoices).join('\n') +'\n\nSee [results by attested users](command:attested), [results by balance](command:stats) or [approved polls](command:polls).');
+		device.sendMessageToDevice(device_address, 'text', 'Choose your answer for:\n'+ poll_question +'\n\n'+getListOfChoiceButtons(poll_unit, arrChoices).join('\n') +'\n\nSee [results by attested users](command:attested), [results by balances](command:stats) or [approved polls](command:polls).');
 	});
 }
 
