@@ -152,6 +152,7 @@ function calcStats(poll_unit, handleStats){
 function sendResults(device_address, poll_unit, poll_question, command){
 	let device = require('byteballcore/device.js');
 
+	assocPollByDeviceAddress[device_address] = poll_unit;
 	calcResults(poll_unit, command, resultsData => {
 		var arrResults = [];
 		for (var choice in resultsData.users){
@@ -164,6 +165,7 @@ function sendResults(device_address, poll_unit, poll_question, command){
 function sendStats(device_address, poll_unit, poll_question){
 	let device = require('byteballcore/device.js');
 
+	assocPollByDeviceAddress[device_address] = poll_unit;
 	calcStats(poll_unit, statsData => {
 		var arrStats = [];
 		for (var choice in statsData.totals){
