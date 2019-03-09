@@ -67,8 +67,20 @@ function readQuestion(poll_unit, handleQuestion){
 }
 
 
-function calcResults(poll_unit, handleResults){
-	db.query("SELECT attested_fields.value, choice FROM votes JOIN unit_authors USING(unit) JOIN attested_fields USING(address) WHERE attestor_address IN(?) AND `field`='user_id' AND poll_unit=? ORDER BY votes.rowid;", [conf.arrRealNameAttestors, poll_unit], rows => {
+function calcResults(poll_unit, command, handleResults){
+	var attestators = [];
+	switch (command) {
+		case 'steem':
+			attestators = conf.arrSteemAttestors;
+			break;
+		case 'email':
+			attestators = conf.arrEmailAttestors;
+			break;
+		default:
+			attestators = conf.arrRealNameAttestors;
+			break;
+	}
+	db.query("SELECT attested_fields.value, choice FROM votes JOIN unit_authors USING(unit) JOIN attested_fields USING(address) WHERE attestor_address IN(?) AND `field`='user_id' AND poll_unit=? ORDER BY votes.rowid;", [attestators, poll_unit], rows => {
 		var assocChoiceByAttestedUser = {};
 		rows.forEach(row => {
 			assocChoiceByAttestedUser[row.value] = row.choice; // later vote overrides the earlier one
@@ -137,15 +149,15 @@ function calcStats(poll_unit, handleStats){
 	});
 }
 
-function sendResults(device_address, poll_unit, poll_question){
+function sendResults(device_address, poll_unit, poll_question, command){
 	let device = require('byteballcore/device.js');
 
-	calcResults(poll_unit, resultsData => {
+	calcResults(poll_unit, command, resultsData => {
 		var arrResults = [];
 		for (var choice in resultsData.users){
 			arrResults.push('- '+ choice + ': '+ resultsData.users[choice].length +' attested users' + (resultsData.attestedTotal ? ' - '+ Math.round(resultsData.users[choice].length/resultsData.attestedTotal*1000)/10 +'%' : '') );
 		}
-		device.sendMessageToDevice(device_address, 'text', 'Results for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee the [stats](command:stats) or other [polls](command:polls)');
+		device.sendMessageToDevice(device_address, 'text', 'Results for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee [results by balance](command:stats) or [approved polls](command:polls) or [vote again](command:poll) on this poll.');
 	});
 }
 
@@ -153,11 +165,11 @@ function sendStats(device_address, poll_unit, poll_question){
 	let device = require('byteballcore/device.js');
 
 	calcStats(poll_unit, statsData => {
-		var arrResults = [];
+		var arrStats = [];
 		for (var choice in statsData.totals){
-			arrResults.push('- '+ choice + ': '+(statsData.totals[choice]/1e9)+' GB ('+ statsData.addresses[choice].length +' addresses)');
+			arrStats.push('- '+ choice + ': '+(statsData.totals[choice]/1e9)+' GB ('+ statsData.addresses[choice].length +' addresses)');
 		}
-		device.sendMessageToDevice(device_address, 'text', 'Stats for:\n' + poll_question + '\n\n' + arrResults.join('\n') +'\n\nSee the [results](command:results) or other [polls](command:polls)');
+		device.sendMessageToDevice(device_address, 'text', 'Stats for:\n' + poll_question + '\n\n' + arrStats.join('\n') +'\n\nSee [results by attested users](command:attested) or [approved polls](command:polls) or [vote again](command:poll) on this poll.');
 	});
 }
 
@@ -170,7 +182,7 @@ function sendPoll(device_address, poll_unit, poll_question){
 			return device.sendMessageToDevice(device_address, 'text', "no choices in poll "+poll_unit);
 		}
 		let arrChoices = rows.map(row => row.choice);
-		device.sendMessageToDevice(device_address, 'text', 'Choose your answer for:\n'+ poll_question +'\n\n'+getListOfChoiceButtons(poll_unit, arrChoices).join('\n') +'\n\nSee the [results](command:results), the [stats](command:stats) or other [polls](command:polls)');
+		device.sendMessageToDevice(device_address, 'text', 'Choose your answer for:\n'+ poll_question +'\n\n'+getListOfChoiceButtons(poll_unit, arrChoices).join('\n') +'\n\nSee [results by attested users](command:attested), [results by balance](command:stats) or [approved polls](command:polls).');
 	});
 }
 
@@ -184,43 +196,37 @@ function parseText(from_address, text){
 		return sendListOfPolls(from_address);
 	}
 
-	// stats command when selected some poll or after voting on some poll
-	if ((text === 'results' || text === 'stats' || text.match(/^voted:/i)) && assocPollByDeviceAddress[from_address]){
-		let poll_unit = assocPollByDeviceAddress[from_address];
+	// `command` or `command-UNIT_ID` or `voted:SOME TEXT`, but not `command some text`
+	let match_commands = text.match(/^(poll|stats|attested|email|steem|voted:)-?(\S.?)?$/i);
+	if (match_commands){
+		let poll_unit;
+		// commands from `byteball:` URI
+		if (match_commands.length === 3 && match_commands[2] && match_commands[1] !== 'voted:'){
+			poll_unit = match_commands[2];
+		}
+		// commands when selected some poll or after voting on some poll
+		else if (assocPollByDeviceAddress[from_address]){
+			poll_unit = assocPollByDeviceAddress[from_address];
+		}
+		else {
+			return sendListOfPolls(from_address);
+		}
 		readQuestion(poll_unit, poll_question => {
 			if (!poll_question) return sendListOfPolls(from_address);
 
-			if (text === 'results'){
-				sendResults(from_address, poll_unit, poll_question);
-			}
-			else if (text === 'stats'){
-				sendStats(from_address, poll_unit, poll_question);
-			}
-			else {
+			if (match_commands[1] === 'voted:'){
 				setTimeout(() => { // wait that the new vote is received
-					sendResults(from_address, poll_unit, poll_question);
 					sendStats(from_address, poll_unit, poll_question);
 				}, 2000);
 			}
-			return;
-		});
-		return;
-	}
-
-	// commands for byteball: URI
-	if (text.match(/^poll-/i) || text.match(/^stats-/i) || text.match(/^results-/i)){
-		let poll_unit = text.replace('poll-', '').replace('stats-', '').replace('results-', '');
-		readQuestion(poll_unit, poll_question => {
-			if (!poll_question) return sendListOfPolls(from_address);
-
-			if (text.match(/^results-/i)){
-				sendResults(from_address, poll_unit, poll_question);
+			if (match_commands[1] === 'poll'){
+				sendPoll(from_address, poll_unit, poll_question);
 			}
-			else if (text.match(/^stats-/i)){
+			else if (match_commands[1] === 'stats'){
 				sendStats(from_address, poll_unit, poll_question);
 			}
 			else {
-				sendPoll(from_address, poll_unit, poll_question);
+				sendResults(from_address, poll_unit, poll_question, match_commands[1]);
 			}
 		});
 		return;
