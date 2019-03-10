@@ -1,6 +1,6 @@
 # Poll bot
 
-This bot can be used to ask feedback from users to vote on different questions, which have pre-defined options given by poll creator. Everybody can be poll creator and ask a question on Obyte platfrom using a single-address wallet by posting a poll from Send screen in wallet app, but person who runs the bot (using `arrPolls` configuration variable) or website like [Obyte.io](https://obyte.io/polls) can decide, which polls are shown to other users.
+This bot can be used to ask feedback from users by voting on different questions, which have pre-defined options given by poll creator. Everybody can be poll creator and ask a question on Obyte platfrom using a single-address wallet by posting a poll from Send screen in wallet app, but person who runs the bot (using `arrPolls` configuration variable) or website like [Obyte.io](https://obyte.io/polls) can decide, which polls are shown to other users.
 
 Each vote that user makes will be signed with all the funded addresses in currently selected wallet. Each vote costs a fee, which mostly depends on how many funded addresses currently selected wallet has (single-address wallets have smaller fees). By default, the bot will show results by all unspent balances of addresses that wallet app used for voting, but results can also be shown by real name attested users, email attested users or Steem attested users, in which case each attested user's last vote will be only counted once.
 
