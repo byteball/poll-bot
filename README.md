@@ -7,7 +7,7 @@ Each vote that user makes will be signed with all the funded addresses in curren
 ## Accessing polls and results from websites
 This bot also accepts commands outside of the wallet app, which can be sent using [`byteball:` protocol URI](https://developer.obyte.org/byteball-protocol-uri#sending-commands-to-chat-bots) as pairing secret code. These are the commands that can be used:
 * `polls` ~ shows all whitelisted polls (using `arrPolls` configuration variable);
-* `poll-POLL_UNIT_ID` ~ shows options of this specific poll;
+* `poll-POLL_UNIT_ID` ~ shows options for voting of this specific poll;
 * `stats-POLL_UNIT_ID` ~ shows results by balances of this specific poll;
 * `attested-POLL_UNIT_ID` ~ shows results by real name attested users of this specific poll;
 * `email-POLL_UNIT_ID` ~ shows results by email attested users of this specific poll;
@@ -21,7 +21,7 @@ Using `byteball:` protocol URI, a HTML hyperlink like this could be created usin
 ```
 
 Same commands (without pairing code) also work in the bot, but when any command above with `POLL_UNIT_ID` was used, following commands below can be used as well because the bot will remember, which poll user interacted with previously:
-* `poll` ~ shows options of previously interacted poll;
+* `poll` ~ shows options for voting of previously interacted poll;
 * `stats` ~ shows results by balances of previously interacted poll;
 * `attested` ~ shows results by real name attested users of previously interacted poll;
 * `email` ~ shows results by email attested users of previously interacted poll;
