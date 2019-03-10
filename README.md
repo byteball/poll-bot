@@ -15,8 +15,11 @@ This bot also accepts commands outside of the wallet app, which can be sent usin
 
 Using `byteball:` protocol URI, a HTML hyperlink like this could be created using `byteball:BOT_PAIRING_CODE#COMMAND_AS_PARING_SECRET` pattern as `href` attribute.
 ```
+<a href="byteball:AhMVGrYMCoeOHUaR9v/CZzTC34kScUeA4OBkRCxnWQM+@byteball.org/bb#polls">
+	show all polls
+</a>
 <a href="byteball:AhMVGrYMCoeOHUaR9v/CZzTC34kScUeA4OBkRCxnWQM+@byteball.org/bb#poll-pecgjVXpD+UaVA1Tf0WBtdleC4vtWh/EtaghX/u/vEU=">
-	vote on this poll
+	vote on specific poll
 </a>
 ```
 
