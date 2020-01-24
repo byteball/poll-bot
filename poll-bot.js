@@ -93,14 +93,18 @@ function calcResults(poll_unit, command, handleResults){
 			}
 			assocAttestedUserByChoice[choice].push(attestedUser);
 		}
+		var assocUsersBySortedChoice = {};
 		db.query("SELECT choice FROM poll_choices WHERE unit=? ORDER BY choice_index;", [poll_unit], rows => {
 			rows.forEach(row => {
 				// set stats for that choice to zero if nobody has voted for that choice
 				if (!assocAttestedUserByChoice[row.choice]){
-					assocAttestedUserByChoice[row.choice] = [];
+					assocUsersBySortedChoice[row.choice] = [];
+				}
+				else {
+					assocUsersBySortedChoice[row.choice] = assocAttestedUserByChoice[row.choice];
 				}
 			});
-			handleResults({users: assocAttestedUserByChoice, attestedTotal: Object.keys(assocChoiceByAttestedUser).length});
+			handleResults({users: assocUsersBySortedChoice, attestedTotal: Object.keys(assocChoiceByAttestedUser).length});
 		});
 	});
 }
@@ -120,6 +124,7 @@ function calcStatsByBalance(poll_unit, handleStats){
 			assocAddressesByChoice[choice].push(address);
 		}
 		var assocTotals = {};
+		var assocBalanceBySortedChoice = {};
 		async.forEachOf(
 			assocAddressesByChoice,
 			function(arrAddresses, choice, cb){
@@ -139,10 +144,13 @@ function calcStatsByBalance(poll_unit, handleStats){
 						// set stats for that choice to zero if nobody has voted for that choice
 						if (!assocAddressesByChoice[row.choice] || !assocTotals[row.choice]){
 							assocAddressesByChoice[row.choice] = [];
-							assocTotals[row.choice] = 0;
+							assocBalanceBySortedChoice[row.choice] = 0;
+						}
+						else {
+							assocBalanceBySortedChoice[row.choice] = assocTotals[row.choice];
 						}
 					});
-					handleStats({addresses: assocAddressesByChoice, totals: assocTotals});
+					handleStats({totals: assocBalanceBySortedChoice, addresses: assocAddressesByChoice});
 				});
 			}
 		);
