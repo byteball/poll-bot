@@ -37,7 +37,7 @@ function getListOfChoiceButtons(poll_unit, arrChoices){
 			poll_unit: poll_unit,
 			choice: choice
 		};
-		let voteJsonBase64 = Buffer(JSON.stringify(objVote)).toString('base64');
+		let voteJsonBase64 = Buffer.from(JSON.stringify(objVote)).toString('base64');
 		return '- ['+choice+'](vote:'+voteJsonBase64+')';
 	});
 }
