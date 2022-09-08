@@ -24,4 +24,4 @@ exports.arrEmailAttestors = ['H5EZTQE7ABFH27AUDTQFMZIALANK6RBG'];
 exports.arrRealNameAttestors = ['I2ADHGP4HL6J37NQAD73J7E5SKFIXJOT', 'JFKWGRMXP3KHUAFMF4SJZVDXFL6ACC6P', 'OHVQ2R5B6TUR5U7WJNYLP3FIOSR7VCED'];
 
 // whitelist of poll units that we have approved
-exports.arrPolls = ['pecgjVXpD+UaVA1Tf0WBtdleC4vtWh/EtaghX/u/vEU=', '0Vv6lhpjjk3VsKCSGML2NY/5W+WgpsNELQJ1rukhL5Y='];
+exports.arrPolls = ['pecgjVXpD+UaVA1Tf0WBtdleC4vtWh/EtaghX/u/vEU=', 'zyOYigthpa90PY3SD+YPh/f7eNDA2/rwukyAQ2H5cg0='];
