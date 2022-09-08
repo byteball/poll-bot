@@ -243,7 +243,7 @@ function parseText(from_address, text){
 	}
 
 	// for displaying choices of whitelisted polls
-	db.query("SELECT unit, question FROM polls WHERE unit IN(?) AND question LIKE ? LIMIT 1;", [conf.arrPolls, text.replace(/[%\?]/gi, '')+'%'], rows => {
+	db.query("SELECT unit, question FROM polls WHERE unit IN(?) AND question = ? LIMIT 1", [conf.arrPolls, text], rows => {
 		if (rows.length === 0){
 			return sendListOfPolls(from_address);
 		}
